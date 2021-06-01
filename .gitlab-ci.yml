@@ -11,7 +11,7 @@ variables:
 # Cache using branch name
 # https://gitlab.com/help/ci/caching/index.md
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: ff0bbefc-43b4-42c0-8acf-30baea2432e5
   paths:
     - .cache/*
     - cache/Cypress
