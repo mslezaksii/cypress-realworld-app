@@ -9,7 +9,6 @@ import { isMobile } from "./utils";
 import "@percy/cypress";
 
 // Import commands for third-party auth providers
-import "./auth-provider-commands/cognito";
 import "./auth-provider-commands/auth0";
 import "./auth-provider-commands/okta";
 
@@ -40,7 +39,7 @@ Cypress.Commands.add("getBySelLike", (selector, ...args) => {
   return cy.get(`[data-test*=${selector}]`, ...args);
 });
 
-Cypress.Commands.add("login", (username, password, rememberUser = false) => {
+Cypress.Commands.add("login", (username, password, { rememberUser = false } = {}) => {
   const signinPath = "/signin";
   const log = Cypress.log({
     name: "login",
@@ -144,7 +143,7 @@ Cypress.Commands.add("loginByXstate", (username, password = Cypress.env("default
 
   cy.window({ log: false }).then((win) => win.authService.send("LOGIN", { username, password }));
 
-  return cy.wait("@loginUser").then((loginUser) => {
+  cy.wait("@loginUser").then((loginUser) => {
     log.set({
       consoleProps() {
         return {
@@ -155,15 +154,18 @@ Cypress.Commands.add("loginByXstate", (username, password = Cypress.env("default
         };
       },
     });
-
-    log.snapshot("after");
-    log.end();
   });
+
+  return cy
+    .getBySel("list-skeleton")
+    .should("not.exist")
+    .then(() => {
+      log.snapshot("after");
+      log.end();
+    });
 });
 
 Cypress.Commands.add("logoutByXstate", () => {
-  cy.intercept("POST", "/logout").as("logoutUser");
-
   const log = Cypress.log({
     name: "logoutByXstate",
     displayName: "LOGOUT BY XSTATE",
@@ -177,15 +179,17 @@ Cypress.Commands.add("logoutByXstate", () => {
     win.authService.send("LOGOUT");
   });
 
-  return cy.wait("@logoutUser").then(() => {
-    log.snapshot("after");
-    log.end();
-  });
+  return cy
+    .location("pathname")
+    .should("equal", "/signin")
+    .then(() => {
+      log.snapshot("after");
+      log.end();
+    });
 });
 
-Cypress.Commands.add("switchUser", (username) => {
+Cypress.Commands.add("switchUserByXstate", (username) => {
   cy.logoutByXstate();
-  cy.location("pathname").should("equal", "/signin");
   return cy.loginByXstate(username).then(() => {
     if (isMobile()) {
       cy.getBySel("sidenav-toggle").click();
@@ -274,17 +278,14 @@ Cypress.Commands.add("pickDateRange", (startDate, endDate) => {
     },
   });
 
-  const selectDate = (date: number) => {
+  const selectDate = (date: Date) => {
     return cy.get(`[data-date='${formatDate(date, "yyyy-MM-dd")}']`).click({ force: true });
   };
 
+  log.snapshot("before");
   // Focus initial viewable date picker range around target start date
-  // @ts-ignore: Cypress expects wrapped variable to be a jQuery type
-  cy.wrap(startDate.getTime()).then((now) => {
-    log.snapshot("before");
-    // @ts-ignore
-    cy.clock(now, ["Date"]);
-  });
+  // @ts-ignore
+  cy.clock(startDate.getTime(), ["Date"]);
 
   // Open date range picker
   cy.getBySelLike("filter-date-range-button").click({ force: true });

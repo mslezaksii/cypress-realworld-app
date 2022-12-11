@@ -1,4 +1,4 @@
-image: cypress/browsers:node14.15.0-chrome86-ff82
+image: cypress/browsers:node16.14.2-slim-chrome100-ff99-edge
 
 api-tests: &api-tests
   name: "API Tests"
@@ -44,65 +44,66 @@ ui-firefox-tests-mobile: &ui-firefox-tests-mobile
   script:
     - yarn start:ci & npx wait-on http://localhost:3000
     - npx cypress run --record --parallel --browser firefox --group "UI - Firefox - Mobile" --spec "cypress/tests/ui/*" --ci-build-id $BITBUCKET_BUILD_NUMBER --config "viewportWidth=375,viewportHeight=667"
-    
+
 pipelines:
   default:
-  - step:
-      name: Install dependencies and build frontend application
-      caches:
-        - yarn
-        - cypress
-        - node
-      script:
-        - yarn install --frozen-lockfile
-        - yarn types
-        - yarn test:unit:ci
-        - yarn build:ci
-      artifacts:
-        - build/**
-  - parallel:
     - step:
-        <<: *api-tests
-    - step:
-        <<: *ui-chrome-tests
-    - step:
-        <<: *ui-chrome-tests
-    - step:
-        <<: *ui-chrome-tests
-    - step:
-        <<: *ui-chrome-tests
-    - step:
-        <<: *ui-chrome-tests
-    - step:
-        <<: *ui-chrome-tests-mobile
-    - step:
-        <<: *ui-chrome-tests-mobile
-    - step:
-        <<: *ui-chrome-tests-mobile
-    - step:
-        <<: *ui-chrome-tests-mobile
-    - step:
-        <<: *ui-chrome-tests-mobile
-    - step:
-        <<: *ui-firefox-tests
-    - step:
-        <<: *ui-firefox-tests
-    - step:
-        <<: *ui-firefox-tests
-    - step:
-        <<: *ui-firefox-tests
-    - step:
-        <<: *ui-firefox-tests
-    - step:
-        <<: *ui-firefox-tests-mobile
-    - step:
-        <<: *ui-firefox-tests-mobile
-    - step:
-        <<: *ui-firefox-tests-mobile
-    - step:
-        <<: *ui-firefox-tests-mobile
-    - step:
-        <<: *ui-firefox-tests-mobile
+        name: Install dependencies and build frontend application
+        caches:
+          - yarn
+          - cypress
+          - node
+        script:
+          - yarn install --frozen-lockfile
+          - yarn types
+          - yarn lint
+          - yarn test:unit:ci
+          - yarn build:ci
+        artifacts:
+          - build/**
+    - parallel:
+        - step:
+            <<: *api-tests
+        - step:
+            <<: *ui-chrome-tests
+        - step:
+            <<: *ui-chrome-tests
+        - step:
+            <<: *ui-chrome-tests
+        - step:
+            <<: *ui-chrome-tests
+        - step:
+            <<: *ui-chrome-tests
+        - step:
+            <<: *ui-chrome-tests-mobile
+        - step:
+            <<: *ui-chrome-tests-mobile
+        - step:
+            <<: *ui-chrome-tests-mobile
+        - step:
+            <<: *ui-chrome-tests-mobile
+        - step:
+            <<: *ui-chrome-tests-mobile
+        - step:
+            <<: *ui-firefox-tests
+        - step:
+            <<: *ui-firefox-tests
+        - step:
+            <<: *ui-firefox-tests
+        - step:
+            <<: *ui-firefox-tests
+        - step:
+            <<: *ui-firefox-tests
+        - step:
+            <<: *ui-firefox-tests-mobile
+        - step:
+            <<: *ui-firefox-tests-mobile
+        - step:
+            <<: *ui-firefox-tests-mobile
+        - step:
+            <<: *ui-firefox-tests-mobile
+        - step:
+            <<: *ui-firefox-tests-mobile
 definitions:
   caches:
     yarn: $HOME/.cache

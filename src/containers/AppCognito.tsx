@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useService, useMachine } from "@xstate/react";
+import { useActor, useMachine } from "@xstate/react";
 import { makeStyles } from "@material-ui/core/styles";
 import { CssBaseline, Container } from "@material-ui/core";
 
@@ -9,7 +9,7 @@ import { authService } from "../machines/authMachine";
 import AlertBar from "../components/AlertBar";
 import { bankAccountsMachine } from "../machines/bankAccountsMachine";
 import PrivateRoutesContainer from "./PrivateRoutesContainer";
-import Amplify from "aws-amplify";
+import { Amplify, Auth } from "aws-amplify";
 import { AmplifyAuthenticator, AmplifySignUp, AmplifySignIn } from "@aws-amplify/ui-react";
 import { AuthState, onAuthUIStateChange } from "@aws-amplify/ui-components";
 
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 
 const AppCognito: React.FC = /* istanbul ignore next */ () => {
   const classes = useStyles();
-  const [authState] = useService(authService);
+  const [authState] = useActor(authService);
   const [, , notificationsService] = useMachine(notificationsMachine);
 
   const [, , snackbarService] = useMachine(snackbarMachine);
@@ -45,6 +45,15 @@ const AppCognito: React.FC = /* istanbul ignore next */ () => {
       console.log("authData: ", authData);
       if (nextAuthState === AuthState.SignedIn) {
         authService.send("COGNITO", { user: authData });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    authService.onEvent(async (event) => {
+      if (event.type === "done.invoke.performLogout") {
+        console.log("AppCognito authService.onEvent done.invoke.performLogout");
+        await Auth.signOut();
       }
     });
   }, []);

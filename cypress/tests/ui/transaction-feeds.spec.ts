@@ -244,7 +244,6 @@ describe("Transaction Feed", function () {
             .then((transactions: Transaction[]) => {
               cy.getBySelLike("transaction-item").should("have.length", transactions.length);
 
-              cy.visualSnapshot("Date Range Filtered Transactions");
               transactions.forEach(({ createdAt }) => {
                 const createdAtDate = startOfDayUTC(new Date(createdAt));
 
@@ -258,6 +257,8 @@ describe("Transaction Feed", function () {
                   and ${dateRangeEnd.toISOString()}`
                 ).to.equal(true);
               });
+
+              cy.visualSnapshot("Date Range Filtered Transactions");
             });
 
           cy.log("Clearing date range filter. Data set should revert");
@@ -270,8 +271,8 @@ describe("Transaction Feed", function () {
             cy.wait(`@${feed.routeAlias}`)
               .its("response.body.results")
               .should("deep.equal", unfilteredResults);
+            cy.visualSnapshot("Unfiltered Transactions");
           });
-          cy.visualSnapshot("Unfiltered Transactions");
         });
       });
 
@@ -333,12 +334,6 @@ describe("Transaction Feed", function () {
         });
 
         cy.getBySelLike("amount-clear-button").click();
-        cy.get("@unfilteredResults").then((unfilteredResults) => {
-          cy.wait(`@${feed.routeAlias}`)
-            .its("response.body.results")
-            .should("deep.equal", unfilteredResults);
-          cy.visualSnapshot("Unfiltered Transactions");
-        });
 
         if (isMobile()) {
           cy.getBySelLike("amount-range-filter-drawer-close").click();
@@ -349,6 +344,13 @@ describe("Transaction Feed", function () {
           cy.getBySel("transaction-list-filter-date-range-button").click({ force: true });
           cy.getBySel("transaction-list-filter-amount-range").should("not.be.visible");
         }
+
+        cy.get("@unfilteredResults").then((unfilteredResults) => {
+          cy.wait(`@${feed.routeAlias}`)
+            .its("response.body.results")
+            .should("deep.equal", unfilteredResults);
+          cy.visualSnapshot("Unfiltered Transactions");
+        });
       });
 
       it(`does not show ${feedName} transactions for out of range amount limits`, function () {
@@ -384,6 +386,7 @@ describe("Transaction Feed", function () {
           const transactionParticipants = [transaction.senderId, transaction.receiverId];
           expect(transactionParticipants).to.include(ctx.user!.id);
         });
+      cy.getBySel("list-skeleton").should("not.exist");
       cy.visualSnapshot("Personal Transactions");
     });
 
@@ -408,6 +411,7 @@ describe("Transaction Feed", function () {
             cy.getBySelLike("transaction-item").eq(i).should("contain", contact);
           });
         });
+      cy.getBySel("list-skeleton").should("not.exist");
       cy.visualSnapshot("First 5 Transaction Items belong to contacts");
     });
 
